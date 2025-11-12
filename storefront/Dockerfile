@@ -2,7 +2,7 @@ FROM node:latest
 
 WORKDIR /app/storefront
 
-COPY . .
+COPY ./nextjs-starter-medusa .
 
 RUN rm -rf node_modules
 
