@@ -1,21 +1,21 @@
-FROM node:latest
+FROM node:18-alpine
 
 WORKDIR /app/medusa
 
-COPY ./medusa/package.json .
+# Enable corepack
+RUN corepack enable
 
-RUN apt-get update
+# Copy package files
+COPY package.json yarn.lock* package-lock.json* ./
 
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
-RUN apt-get install -y python3
+# Copy source files
+COPY . .
 
-RUN npm install -g npm@latest
+# Expose Medusa port
+EXPOSE 9000
 
-RUN npm install -g @medusajs/medusa-cli@latest
-RUN npm install -g yarn
-
-RUN yarn install --loglevel=error
-
-COPY ./medusa .
-
-ENTRYPOINT ["./develop.sh", "develop"]
+# Run migrations and start in development mode
+CMD ["sh", "-c", "medusa migrations run && npm run dev"]

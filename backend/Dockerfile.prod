@@ -1,47 +1,49 @@
-FROM node:17.1.0 as builder
+FROM node:18-alpine as deps
 
-WORKDIR /app/medusa
+WORKDIR /app
 
-COPY . . 
+# Enable corepack for yarn
+RUN corepack enable
 
-RUN rm -rf node_modules
+# Copy package files
+COPY package.json yarn.lock* package-lock.json* ./
 
-RUN apt-get update
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
-RUN apt-get install -y python
+# Build stage
+FROM node:18-alpine as builder
 
-RUN npm install -g npm@latest
+WORKDIR /app
 
-RUN npm install --loglevel=error
+# Enable corepack
+RUN corepack enable
 
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source files
+COPY . .
+
+# Build the project
 RUN npm run build
 
+# Production stage
+FROM node:18-alpine as runner
 
-FROM node:17.1.0
+WORKDIR /app
 
-WORKDIR /app/medusa
+# Enable corepack
+RUN corepack enable
 
-RUN mkdir dist
+# Copy built files and dependencies
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/medusa-config.js ./medusa-config.js
 
-COPY package*.json ./ 
-
-COPY develop.sh .
-
-COPY .env .
-
-COPY medusa-config.js .
-
-RUN apt-get update
-
-RUN apt-get install -y python
-# RUN apk add --no-cache python3
-
-RUN npm install -g @medusajs/medusa-cli
-
-RUN npm i --only=production
-
-COPY --from=builder /app/medusa/dist ./dist
-
+# Expose Medusa port
 EXPOSE 9000
 
-ENTRYPOINT ["./develop.sh", "start"]
+# Run migrations and start server
+CMD ["sh", "-c", "medusa migrations run && npm run start"]

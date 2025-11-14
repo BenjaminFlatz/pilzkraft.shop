@@ -1,63 +1,27 @@
-const path = require(`path`)
-const glob = require(`glob`)
-const fs = require(`fs`)
-
-const pkgs = [
-  glob.sync(`./packages/*`).map((p) => p.replace(/^\./, `<rootDir>`)),
-  glob.sync(`./packages/cli/*`).map((p) => p.replace(/^\./, `<rootDir>`)),
-  glob.sync(`./packages/core/*`).map((p) => p.replace(/^\./, `<rootDir>`)),
-  glob.sync(`./packages/modules/*`).map((p) => p.replace(/^\./, `<rootDir>`)),
-  glob
-    .sync(`./packages/modules/providers/*`)
-    .map((p) => p.replace(/^\./, `<rootDir>`)),
-].flat(Infinity)
-
-const reMedusa = /medusa$/
-const medusaDir = pkgs.find((p) => reMedusa.exec(p))
-const medusaBuildDirs = [`dist`].map((dir) => path.join(medusaDir, dir))
-const builtTestsDirs = pkgs
-  .filter((p) => fs.existsSync(path.join(p, `src`)))
-  .map((p) => path.join(p, `__tests__`))
-const distDirs = pkgs.map((p) => path.join(p, `dist`))
-const ignoreDirs = [].concat(
-  medusaBuildDirs,
-  builtTestsDirs,
-  distDirs,
-  "<rootDir>/packages/medusa-react/*"
-)
-
-const coverageDirs = pkgs.map((p) => path.join(p, `src/**/*.js`))
-const useCoverage = !!process.env.GENERATE_JEST_REPORT
-const projects = pkgs.map((pkg) => pkg.concat("/jest.config.js"))
+const { loadEnv } = require("@medusajs/utils");
+loadEnv("test", process.cwd());
 
 module.exports = {
-  notify: true,
-  verbose: true,
-  roots: ["<rootDir>"],
-  projects: [
-    "<rootDir>/packages/*/jest.config.js",
-    "<rootDir>/packages/cli/*/jest.config.js",
-    "<rootDir>/packages/core/*/jest.config.js",
-    "<rootDir>/packages/modules/*/jest.config.js",
-    "<rootDir>/packages/modules/providers/*/jest.config.js",
-  ],
-  modulePathIgnorePatterns: ignoreDirs,
-  coveragePathIgnorePatterns: ignoreDirs,
-  testPathIgnorePatterns: [
-    `<rootDir>/examples/`,
-    `<rootDir>/dist/`,
-    `<rootDir>/node_modules/`,
-    `__tests__/fixtures`,
-  ],
-  //moduleNameMapper: {
-  //  "^highlight.js$": `<rootDir>/node_modules/highlight.js/lib/index.js`,
-  //},
-  //snapshotSerializers: [`jest-serializer-path`],
-  collectCoverageFrom: coverageDirs,
-  //reporters: process.env.CI
-  //  ? [[`jest-silent-reporter`, { useDots: true }]].concat(
-  //      useCoverage ? `jest-junit` : []
-  //    )
-  //  : [`default`].concat(useCoverage ? `jest-junit` : []),
-  // setupFiles: [`<rootDir>/.jestSetup.js`],
+  transform: {
+    "^.+\\.[jt]s$": [
+      "@swc/jest",
+      {
+        jsc: {
+          parser: { syntax: "typescript", decorators: true },
+        },
+      },
+    ],
+  },
+  testEnvironment: "node",
+  moduleFileExtensions: ["js", "ts", "json"],
+  modulePathIgnorePatterns: ["dist/", "<rootDir>/.medusa/"],
+  setupFiles: ["./integration-tests/setup.js"],
+};
+
+if (process.env.TEST_TYPE === "integration:http") {
+  module.exports.testMatch = ["**/integration-tests/http/*.spec.[jt]s"];
+} else if (process.env.TEST_TYPE === "integration:modules") {
+  module.exports.testMatch = ["**/src/modules/*/__tests__/**/*.[jt]s"];
+} else if (process.env.TEST_TYPE === "unit") {
+  module.exports.testMatch = ["**/src/**/__tests__/**/*.unit.spec.[jt]s"];
 }
