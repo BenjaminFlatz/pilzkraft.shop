@@ -10,6 +10,9 @@ services:
       - "9000:9000"
 
   admin:
+    volumes:
+      - ./admin:/app/admin
+      - admin_node_modules:/app/admin/node_modules
     ports:
       - "7000:7000"
 
@@ -23,3 +26,4 @@ services:
 volumes:
   storefront_node_modules:
   backend_node_modules:
+  admin_node_modules:
