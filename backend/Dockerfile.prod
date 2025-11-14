@@ -1,6 +1,6 @@
 FROM node:18-alpine as deps
 
-WORKDIR /app
+WORKDIR /app/medusa
 
 # Enable corepack for yarn
 RUN corepack enable
@@ -14,7 +14,7 @@ RUN npm install --legacy-peer-deps
 # Build stage
 FROM node:18-alpine as builder
 
-WORKDIR /app
+WORKDIR /app/medusa
 
 # Enable corepack
 RUN corepack enable
@@ -31,7 +31,7 @@ RUN npm run build
 # Production stage
 FROM node:18-alpine as runner
 
-WORKDIR /app
+WORKDIR /app/medusa
 
 # Enable corepack
 RUN corepack enable

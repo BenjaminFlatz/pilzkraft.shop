@@ -11,7 +11,7 @@ services:
       - redis
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/medusa-docker
-      REDIS_URL: redis://cache
+      REDIS_URL: redis://redis:6379
       NODE_ENV: development
       JWT_SECRET: some_jwt_secret
       COOKIE_SECRET: some_cookie_secret
@@ -32,6 +32,8 @@ services:
     container_name: cache
     expose:
       - 6379
+    volumes:
+      - redis_data:/data
 
   admin:
     build:
@@ -43,6 +45,7 @@ services:
     container_name: medusa-admin
     environment:
       NODE_OPTIONS: --openssl-legacy-provider
+      GATSBY_MEDUSA_BACKEND_URL: http://backend:9000
 
   storefront:
     build:
@@ -52,3 +55,9 @@ services:
     container_name: medusa-storefront
     depends_on:
       - backend
+    environment:
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://backend:9000
+
+volumes:
+  postgres_data:
+  redis_data:

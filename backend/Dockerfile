@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 9000
 
 # Run migrations and start in development mode
-CMD ["sh", "-c", "medusa migrations run && npm run dev"]
+CMD ["sh", "-c", "npx medusa migrations run && npm run dev"]
