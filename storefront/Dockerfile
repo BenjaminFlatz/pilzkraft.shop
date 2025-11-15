@@ -1,19 +1,26 @@
 FROM node:latest
 
+
 WORKDIR /app/storefront
 
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files first
+COPY package.json package-lock.json* ./
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
+
+# Copy rest of application
 COPY . .
 
-RUN rm -rf node_modules
+# Expose port
+EXPOSE 8000
 
-RUN apt-get update
-
-RUN npm install -g npm@latest
-
-RUN npm install -g gatsby-cli
-
-RUN npm install sharp
-
-RUN npm install --loglevel=error
-
-ENTRYPOINT ["gatsby", "develop", "-H", "0.0.0.0", "-p", "8000" ]
+# Start development server (use npm script instead of gatsby directly)
+CMD ["npm", "run", "dev"]

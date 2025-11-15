@@ -1,4 +1,4 @@
-FROM node:18-alpine as deps
+FROM node:latest as deps
 
 WORKDIR /app/medusa
 
@@ -12,7 +12,7 @@ COPY package.json yarn.lock* package-lock.json* ./
 RUN npm install --legacy-peer-deps
 
 # Build stage
-FROM node:18-alpine as builder
+FROM node:latest as builder
 
 WORKDIR /app/medusa
 
@@ -29,7 +29,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine as runner
+FROM node:latest as runner
 
 WORKDIR /app/medusa
 

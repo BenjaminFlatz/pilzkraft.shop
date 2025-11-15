@@ -1,21 +1,19 @@
-FROM node:18-alpine
+FROM node:latest
 
 WORKDIR /app/medusa
 
-# Enable corepack
-RUN corepack enable
-
-# Copy package files
-COPY package.json yarn.lock* package-lock.json* ./
-
-# Install dependencies
-RUN npm install --legacy-peer-deps
-
-# Copy source files
 COPY . .
+
+RUN rm -rf node_modules
+
+RUN apt-get update
+
+RUN npm install -g npm@latest
+
+RUN npm install --loglevel=error
 
 # Expose Medusa port
 EXPOSE 9000
 
 # Run migrations and start in development mode
-CMD ["sh", "-c", "npx medusa migrations run && npm run dev"]
+CMD ["sh", "-c", "npx medusa db:migrate && npm run dev"]
